@@ -1,42 +1,22 @@
-import { EOL } from 'os'
-import * as hljs from 'highlight.js'
 import React from 'react'
-import Spinner from 'react-spinner'
+import * as hljs from 'highlight.js'
 import ResizeObserver from 'resize-observer-polyfill'
-import toHash from 'tohash'
 import debounce from 'lodash.debounce'
 import ms from 'ms'
+import { Controlled as CodeMirror } from 'react-codemirror2'
+
 import WindowControls from '../components/WindowControls'
-import CodeMirror from '../lib/react-codemirror'
-import {
-  COLORS,
-  DEFAULT_LANGUAGE,
-  LANGUAGES,
-  LANGUAGE_MODE_HASH,
-  LANGUAGE_NAME_HASH,
-  DEFAULT_SETTINGS
-} from '../lib/constants'
+import Watermark from '../components/svg/Watermark'
+import { COLORS, LANGUAGE_MODE_HASH, LANGUAGE_NAME_HASH, DEFAULT_SETTINGS } from '../lib/constants'
 
-class Carbon extends React.Component {
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      loading: true,
-      language: props.config.language
-    }
-
-    this.handleLanguageChange = this.handleLanguageChange.bind(this)
-    this.codeUpdated = this.codeUpdated.bind(this)
+class Carbon extends React.PureComponent {
+  static defaultProps = {
+    onAspectRatioChange: () => {},
+    updateCode: () => {},
+    innerRef: () => {}
   }
 
   componentDidMount() {
-    this.setState({
-      loading: false
-    })
-
-    this.handleLanguageChange(this.props.children)
-
     const ro = new ResizeObserver(entries => {
       const cr = entries[0].contentRect
       this.props.onAspectRatioChange(cr.width / cr.height)
@@ -44,88 +24,102 @@ class Carbon extends React.Component {
     ro.observe(this.exportContainerNode)
   }
 
-  componentWillReceiveProps(newProps) {
-    this.handleLanguageChange(newProps.children, { customProps: newProps })
-  }
-
-  codeUpdated(newCode) {
-    this.handleLanguageChange(newCode)
-    this.props.updateCode(newCode)
-  }
-
   handleLanguageChange = debounce(
-    (newCode, config) => {
-      const props = (config && config.customProps) || this.props
-
-      if (props.config.language === 'auto') {
+    (newCode, language) => {
+      if (language === 'auto') {
         // try to set the language
         const detectedLanguage = hljs.highlightAuto(newCode).language
         const languageMode =
           LANGUAGE_MODE_HASH[detectedLanguage] || LANGUAGE_NAME_HASH[detectedLanguage]
 
         if (languageMode) {
-          this.setState({ language: languageMode.mime || languageMode.mode })
+          return languageMode.mime || languageMode.mode
         }
-      } else {
-        this.setState({ language: props.config.language })
       }
+
+      return language
     },
     ms('300ms'),
-    { trailing: true }
+    {
+      leading: true,
+      trailing: true
+    }
   )
+
+  onBeforeChange = (editor, meta, code) => {
+    if (!this.props.readOnly) {
+      this.props.updateCode(code)
+    }
+  }
+
+  getRef = ele => {
+    this.exportContainerNode = ele
+    this.props.innerRef(ele)
+  }
 
   render() {
     const config = { ...DEFAULT_SETTINGS, ...this.props.config }
+
+    const languageMode = this.handleLanguageChange(this.props.children, config.language)
+
     const options = {
       lineNumbers: config.lineNumbers,
-      mode: this.state.language || 'plaintext',
+      mode: languageMode || 'plaintext',
       theme: config.theme,
       scrollBarStyle: null,
       viewportMargin: Infinity,
-      lineWrapping: true
+      lineWrapping: true,
+      extraKeys: {
+        'Shift-Tab': 'indentLess'
+      },
+      // negative values removes the cursor, undefined means default (530)
+      cursorBlinkRate: this.props.readOnly ? -1 : undefined
     }
     const backgroundImage =
       (this.props.config.backgroundImage && this.props.config.backgroundImageSelection) ||
       this.props.config.backgroundImage
 
-    // set content to spinner if loading, else editor
-    let content = (
-      <div>
-        <Spinner />
+    const content = (
+      <div className="container">
+        {config.windowControls ? (
+          <WindowControls
+            titleBar={this.props.titleBar}
+            theme={config.windowTheme}
+            handleTitleBarChange={this.props.updateTitleBar}
+            code={this.props.children}
+            copyable={this.props.copyable}
+          />
+        ) : null}
+        <CodeMirror
+          className={`CodeMirror__container window-theme__${config.windowTheme}`}
+          onBeforeChange={this.onBeforeChange}
+          value={this.props.children}
+          options={options}
+        />
+        {config.watermark && <Watermark />}
+        <div className="container-bg">
+          <div className="white eliminateOnRender" />
+          <div className="alpha eliminateOnRender" />
+          <div className="bg" />
+        </div>
         <style jsx>
           {`
-            div {
-              height: 352px;
-            }
-          `}
-        </style>
-      </div>
-    )
-    if (this.state.loading === false) {
-      content = (
-        <div id="container">
-          {config.windowControls ? <WindowControls theme={config.windowTheme} /> : null}
-          <CodeMirror
-            className={`CodeMirror__container window-theme__${config.windowTheme}`}
-            onBeforeChange={(editor, meta, code) => this.codeUpdated(code)}
-            value={this.props.children}
-            options={options}
-          />
-          <div id="container-bg">
-            <div className="white eliminateOnRender" />
-            <div className="alpha eliminateOnRender" />
-            <div className="bg" />
-          </div>
-          <style jsx>{`
-            #container {
+            .container {
               position: relative;
               min-width: ${config.widthAdjustment ? '90px' : '680px'};
-              max-width: 1024px; /* The Fallback */
-              max-width: 92vw;
+              max-width: 1024px;
               padding: ${config.paddingVertical} ${config.paddingHorizontal};
             }
 
-            #container #container-bg {
+            .container :global(.watermark) {
+              fill-opacity: 0.3;
+              position: absolute;
+              z-index: 2;
+              bottom: calc(${config.paddingVertical} + 16px);
+              right: calc(${config.paddingHorizontal} + 16px);
+            }
+
+            .container .container-bg {
               position: absolute;
               top: 0px;
               right: 0px;
@@ -133,7 +127,7 @@ class Carbon extends React.Component {
               left: 0px;
             }
 
-            #container .white {
+            .container .white {
               background: #fff;
               position: absolute;
               top: 0px;
@@ -142,48 +136,58 @@ class Carbon extends React.Component {
               left: 0px;
             }
 
-            #container .bg {
+            .container .bg {
               ${this.props.config.backgroundMode === 'image'
                 ? `background: url(${backgroundImage});
-                   background-size: cover;
-                   background-repeat: no-repeat;`
+                     background-size: cover;
+                     background-repeat: no-repeat;`
                 : `background: ${this.props.config.backgroundColor || config.backgroundColor};
-                   background-size: auto;
-                   background-repeat: repeat;`} position: absolute;
+                     background-size: auto;
+                     background-repeat: repeat;`} position: absolute;
               top: 0px;
               right: 0px;
               bottom: 0px;
               left: 0px;
             }
 
-            #container .alpha {
+            .container .alpha {
               position: absolute;
               top: 0px;
               right: 0px;
               bottom: 0px;
               left: 0px;
-              background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==)
-                left center;
+              background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==);
             }
 
-            #container :global(.cm-s-dracula .CodeMirror-cursor) {
+            /* TODO move the theme specific styles out of this component */
+            .container :global(.cm-s-dracula .CodeMirror-cursor) {
               border-left: solid 2px #159588;
             }
 
-            #container :global(.cm-s-solarized) {
+            .container :global(.cm-s-solarized) {
               box-shadow: none;
             }
 
-            #container :global(.cm-s-solarized.cm-s-light) {
+            .container :global(.cm-s-solarized.cm-s-light .CodeMirror-linenumber),
+            .container :global(.cm-s-solarized.cm-s-light .CodeMirror-linenumbers) {
+              background-color: #fdf6e3 !important;
+            }
+
+            .container :global(.cm-s-solarized.cm-s-dark .CodeMirror-linenumber),
+            .container :global(.cm-s-solarized.cm-s-dark .CodeMirror-linenumbers) {
+              background-color: #002b36 !important;
+            }
+
+            .container :global(.cm-s-solarized.cm-s-light) {
               text-shadow: #eee8d5 0 1px;
             }
 
-            #container :global(.CodeMirror-gutters) {
+            .container :global(.CodeMirror-gutters) {
               background-color: unset;
               border-right: none;
             }
 
-            #container :global(.CodeMirror__container) {
+            .container :global(.CodeMirror__container) {
               min-width: inherit;
               position: relative;
               z-index: 1;
@@ -195,62 +199,65 @@ class Carbon extends React.Component {
                 : ''};
             }
 
-            #container :global(.CodeMirror__container .CodeMirror) {
+            .container :global(.CodeMirror__container .CodeMirror) {
               height: auto;
               min-width: inherit;
               padding: 18px 18px;
               ${config.lineNumbers ? 'padding-left: 12px;' : ''} border-radius: 5px;
               font-family: ${config.fontFamily}, monospace !important;
               font-size: ${config.fontSize};
+              line-height: ${config.lineHeight};
               font-variant-ligatures: contextual;
               font-feature-settings: 'calt' 1;
               user-select: none;
             }
 
-            #container :global(.CodeMirror-scroll) {
+            .container :global(.CodeMirror-scroll) {
               overflow: hidden !important;
             }
 
-            #container :global(.window-theme__sharp > .CodeMirror) {
+            .container :global(.window-theme__sharp > .CodeMirror) {
               border-radius: 0px;
             }
 
-            #container :global(.window-theme__bw > .CodeMirror) {
+            .container :global(.window-theme__bw > .CodeMirror) {
               border: 2px solid ${COLORS.SECONDARY};
             }
 
-            #container :global(.window-controls + .CodeMirror__container > .CodeMirror) {
+            .container :global(.window-controls + .CodeMirror__container > .CodeMirror) {
               padding-top: 48px;
             }
-          `}</style>
-        </div>
-      )
-    }
+          `}
+        </style>
+      </div>
+    )
 
     return (
-      <div id="section">
-        <div id="export-container" ref={ele => (this.exportContainerNode = ele)}>
+      <div className="section">
+        <div className="export-container" ref={this.getRef}>
           {content}
-          <div id="twitter-png-fix" />
+          <div className="twitter-png-fix" />
         </div>
-        <style jsx>{`
-          #section,
-          #export-container {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-          }
+        <style jsx>
+          {`
+            .section,
+            .export-container {
+              height: 100%;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              overflow: hidden;
+            }
 
-          /* forces twitter to save images as png — https://github.com/dawnlabs/carbon/issues/86 */
-          #twitter-png-fix {
-            height: 1px;
-            width: 100%;
-            background: rgba(0, 0, 0, 0.01);
-          }
-        `}</style>
+            /* forces twitter to save images as png — https://github.com/dawnlabs/carbon/issues/86 */
+            .twitter-png-fix {
+              height: 1px;
+              width: 100%;
+              background: rgba(0, 0, 0, 0.01);
+            }
+          `}
+        </style>
       </div>
     )
   }

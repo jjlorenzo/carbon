@@ -1,7 +1,9 @@
 import React from 'react'
 import ReactCrop, { makeAspectCrop } from 'react-image-crop'
-import Slider from './Slider'
-import { COLORS } from '../lib/constants'
+
+import RandomImage from './RandomImage'
+import PhotoCredit from './PhotoCredit'
+import { fileToDataURL } from '../lib/util'
 
 const getCroppedImg = (imageDataURL, pixelCrop) => {
   const canvas = document.createElement('canvas')
@@ -9,7 +11,7 @@ const getCroppedImg = (imageDataURL, pixelCrop) => {
   canvas.height = pixelCrop.height
   const ctx = canvas.getContext('2d')
 
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     const image = new Image()
     image.src = imageDataURL
     image.onload = () => {
@@ -30,11 +32,11 @@ const getCroppedImg = (imageDataURL, pixelCrop) => {
   })
 }
 
-const INITIAL_STATE = { crop: null, imageAspectRatio: null, pixelCrop: null }
+const INITIAL_STATE = { crop: null, imageAspectRatio: null, pixelCrop: null, photographer: null }
 
 export default class extends React.Component {
-  constructor() {
-    super()
+  constructor(props) {
+    super(props)
     this.state = INITIAL_STATE
     this.selectImage = this.selectImage.bind(this)
     this.removeImage = this.removeImage.bind(this)
@@ -43,37 +45,33 @@ export default class extends React.Component {
     this.onDragEnd = this.onDragEnd.bind(this)
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (this.state.crop && this.props.aspectRatio != nextProps.aspectRatio) {
+  static getDerivedStateFromProps(nextProps, state) {
+    if (state.crop) {
       // update crop for editor container aspect-ratio change
-      this.setState({
+      return {
         crop: makeAspectCrop(
           {
-            ...this.state.crop,
+            ...state.crop,
             aspect: nextProps.aspectRatio
           },
-          this.state.imageAspectRatio
+          state.imageAspectRatio
         )
-      })
+      }
+    }
+    return null
+  }
+
+  async onDragEnd() {
+    if (this.state.pixelCrop) {
+      const croppedImg = await getCroppedImg(this.props.imageDataURL, this.state.pixelCrop)
+      this.props.onChange({ backgroundImageSelection: croppedImg })
     }
   }
 
-  selectImage(e) {
-    const file = e.target.files[0]
-
-    const reader = new FileReader()
-    reader.onload = e =>
-      this.props.onChange({ backgroundImage: e.target.result, backgroundImageSelection: null })
-    reader.readAsDataURL(file)
-  }
-
-  removeImage() {
-    this.setState(INITIAL_STATE, () => {
-      this.props.onChange({
-        backgroundMode: 'color',
-        backgroundImage: null,
-        backgroundImageSelection: null
-      })
+  onCropChange(crop, pixelCrop) {
+    this.setState({
+      crop: { ...crop, aspect: this.props.aspectRatio },
+      pixelCrop
     })
   }
 
@@ -92,35 +90,74 @@ export default class extends React.Component {
     })
   }
 
-  onCropChange(crop, pixelCrop) {
-    this.setState({
-      crop: { ...crop, aspect: this.props.aspectRatio },
-      pixelCrop
-    })
+  selectImage(e, { photographer } = {}) {
+    const file = e.target ? e.target.files[0] : e
+
+    return fileToDataURL(file).then(dataURL =>
+      this.setState({ photographer }, () => {
+        this.props.onChange({
+          backgroundImage: dataURL,
+          backgroundImageSelection: null,
+          photographer
+        })
+      })
+    )
   }
 
-  async onDragEnd() {
-    if (this.state.pixelCrop) {
-      const croppedImg = await getCroppedImg(this.props.imageDataURL, this.state.pixelCrop)
-      this.props.onChange({ backgroundImageSelection: croppedImg })
-    }
+  removeImage() {
+    this.setState(INITIAL_STATE, () => {
+      this.props.onChange({
+        backgroundImage: null,
+        backgroundImageSelection: null
+      })
+    })
   }
 
   render() {
     let content = (
-      <div className="upload-image">
-        <span>Click the button below to upload a background image</span>
-        <input type="file" accept="image/x-png,image/jpeg,image/jpg" onChange={this.selectImage} />
-        <style jsx>{`
-          .upload-image {
-            padding: 8px;
-          }
+      <div>
+        <div className="choose-image">
+          <span>Click the button below to upload a background image:</span>
+          <input
+            type="file"
+            accept="image/png,image/x-png,image/jpeg,image/jpg"
+            onChange={this.selectImage}
+          />
+        </div>
+        <hr />
+        <div className="random-image">
+          <span>
+            Or use a random <a href="https://unsplash.com/">Unsplash</a> image:
+          </span>
+          <RandomImage onChange={this.selectImage} />
+        </div>
+        <style jsx>
+          {`
+            .choose-image,
+            .random-image {
+              padding: 8px;
+            }
 
-          span {
-            display: block;
-            margin-bottom: 16px;
-          }
-        `}</style>
+            input {
+              cursor: pointer;
+              outline: none;
+            }
+
+            span {
+              display: block;
+              margin-bottom: 16px;
+            }
+
+            a {
+              text-decoration: underline;
+            }
+
+            hr {
+              border-bottom: none;
+              margin-bottom: 0;
+            }
+          `}
+        </style>
       </div>
     )
 
@@ -144,32 +181,35 @@ export default class extends React.Component {
               minWidth={10}
               keepSelection
             />
+            {this.state.photographer && <PhotoCredit photographer={this.state.photographer} />}
           </div>
-          <style jsx>{`
-            .settings-container img {
-              width: 100%;
-            }
+          <style jsx>
+            {`
+              .settings-container img {
+                width: 100%;
+              }
 
-            .label {
-              user-select: none;
-              margin-bottom: 4px;
-            }
+              .label {
+                user-select: none;
+                margin-bottom: 4px;
+              }
 
-            :global(.ReactCrop__image) {
-              user-select: none;
-              user-drag: none;
-            }
+              :global(.ReactCrop__image) {
+                user-select: none;
+                user-drag: none;
+              }
 
-            .image-container {
-              padding: 8px;
-            }
+              .image-container {
+                padding: 8px;
+              }
 
-            .image-container .label {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-            }
-          `}</style>
+              .image-container .label {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              }
+            `}
+          </style>
         </div>
       )
     }
@@ -177,11 +217,13 @@ export default class extends React.Component {
     return (
       <div>
         <div className="image-picker-container">{content}</div>
-        <style jsx>{`
-          .image-picker-container {
-            font-size: 12px;
-          }
-        `}</style>
+        <style jsx>
+          {`
+            .image-picker-container {
+              font-size: 12px;
+            }
+          `}
+        </style>
       </div>
     )
   }

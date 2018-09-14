@@ -10,26 +10,29 @@ export default props => (
       color: props.color,
       border: `1px solid ${props.color}`
     }}
+    disabled={props.disabled}
   >
     <span>{props.title}</span>
-    <style jsx>{`
-      button {
-        cursor: pointer;
-        outline: none;
-        height: 100%;
-        padding: 0 16px;
-        border-radius: 3px;
-        user-select: none;
-      }
+    <style jsx>
+      {`
+        button {
+          cursor: pointer;
+          outline: none;
+          height: 100%;
+          padding: 0 16px;
+          border-radius: 3px;
+          user-select: none;
+        }
 
-      button:hover {
-        background: ${COLORS.HOVER} !important;
-      }
+        button:hover {
+          background: ${COLORS.HOVER} !important;
+        }
 
-      button > span {
-        font-size: 14px;
-        line-height: 1;
-      }
-    `}</style>
+        button > span {
+          font-size: 14px;
+          line-height: 1;
+        }
+      `}
+    </style>
   </button>
 )

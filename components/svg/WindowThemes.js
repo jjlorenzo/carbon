@@ -13,10 +13,10 @@ export const Sharp = () => (
     </defs>
     <g fill="none" fillRule="evenodd">
       <mask id="b1" fill="white">
-        <use xlinkHref="#a" />
+        <use xlinkHref="#a1" />
       </mask>
-      <use fill="#616161" xlinkHref="#a" />
-      <g transform="translate(16 32)" mask="url(#b)">
+      <use fill="#616161" xlinkHref="#a1" />
+      <g transform="translate(16 32)" mask="url(#b1)">
         <path
           fill="#000000"
           fillRule="nonzero"
@@ -62,10 +62,10 @@ export const BW = () => (
     </defs>
     <g fill="none" fillRule="evenodd">
       <mask id="b2" fill="white">
-        <use xlinkHref="#a" />
+        <use xlinkHref="#a2" />
       </mask>
-      <use fill="#616161" xlinkHref="#a" />
-      <g transform="translate(17 33)" mask="url(#b)">
+      <use fill="#616161" xlinkHref="#a2" />
+      <g transform="translate(17 33)" mask="url(#b2)">
         <path
           fill="#000000"
           stroke="#FFFFFF"
@@ -94,10 +94,10 @@ export const None = () => (
     </defs>
     <g fill="none" fillRule="evenodd">
       <mask id="b3" fill="white">
-        <use xlinkHref="#a" />
+        <use xlinkHref="#a3" />
       </mask>
-      <use fill="#616161" xlinkHref="#a" />
-      <g transform="translate(16 32)" mask="url(#b)">
+      <use fill="#616161" xlinkHref="#a3" />
+      <g transform="translate(16 32)" mask="url(#b3)">
         <path
           fill="#000000"
           fillRule="nonzero"

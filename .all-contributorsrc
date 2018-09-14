@@ -212,6 +212,126 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "NARKOZ",
+      "name": "Nihad Abbasov",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/253398?v=4",
+      "profile": "https://github.com/NARKOZ",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "TorzuoliH",
+      "name": "Hugo Torzuoli",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/7328625?v=4",
+      "profile": "https://torzuolih.github.io",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "imbrn",
+      "name": "Bruno C. Couto",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/1906977?v=4",
+      "profile": "https://github.com/imbrn",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "molnarmark",
+      "name": "Mark Molnar",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/13263073?v=4",
+      "profile": "https://github.com/molnarmark",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "TETRA2000",
+      "name": "Takahiko Inayama",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/1459450?v=4",
+      "profile": "https://www.behance.net/tetra2000",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "martinfrancois",
+      "name": "François Martin",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/14319020?v=4",
+      "profile": "https://github.com/martinfrancois",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "raphamorim",
+      "name": "Raphael Amorim",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/3630346?v=4",
+      "profile": "http://raphamorim.io",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "camflan",
+      "name": "Camron Flanders",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/27292?v=4",
+      "profile": "http://camronflanders.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ericadamski",
+      "name": "Eric Adamski",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/6516758?v=4",
+      "profile": "https://ericadamski.github.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "wistcc",
+      "name": "Winner Crespo",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/4671080?v=4",
+      "profile": "http://winnercrespo.com",
+      "contributions": [
+        "code",
+        "design"
+      ]
+    },
+    {
+      "login": "mixn",
+      "name": "Milos",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/672237?v=4",
+      "profile": "http://twitter.com/mixn",
+      "contributions": [
+        "code",
+        "tool"
+      ]
+    },
+    {
+      "login": "mittalyashu",
+      "name": "Yashu Mittal",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/29014463?v=4",
+      "profile": "https://mittalyashu.now.sh/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "rachelcarmena",
+      "name": "Rachel M. Carmena",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/22792183?v=4",
+      "profile": "https://twitter.com/bberrycarmen",
+      "contributions": [
+        "doc"
+      ]
     }
-  ]
+  ],
+  "repoType": "github"
 }

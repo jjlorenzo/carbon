@@ -1,13 +1,23 @@
-const Uglify = require('uglifyjs-webpack-plugin')
+// const { PHASE_DEVELOPMENT_SERVER } = require('next/constants')
+// const withOffline = require('next-offline')
 
-module.exports = {
-  // TODO remove `next.configs.js` when this closes: https://github.com/zeit/next.js/issues/1195
-  webpack: function(c, { dev }) {
-    if (!dev) {
-      c.plugins = c.plugins.filter(plugin => plugin.constructor.name !== 'UglifyJsPlugin')
-      c.plugins.push(new Uglify())
+module.exports = (/* phase  { defaultConfig } */) => {
+  const config = {
+    async exportPathMap() {
+      return {
+        '/about': { page: '/about' },
+        '/embed': { page: '/embed' },
+        '/index': { page: '/index' },
+        '/': { page: '/' }
+      }
+    },
+    publicRuntimeConfig: {
+      API_URL:
+        process.env.NODE_ENV === 'production'
+          ? 'https://carbon-api.now.sh'
+          : 'http://localhost:4000'
     }
-
-    return c
   }
+
+  return config
 }
